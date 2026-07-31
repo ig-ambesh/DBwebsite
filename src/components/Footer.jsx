@@ -10,29 +10,29 @@ import { FaLeaf } from "react-icons/fa";
 
 export default function Footer() {
   return (
-    <footer className="bg-[#16341d] text-white">
-      <div className="mx-auto max-w-7xl px-6 py-16">
+    <footer className="hidden md:block bg-[#16341d] text-white">
+      <div className="mx-auto max-w-7xl px-4 md:px-6 py-10 md:py-16">
 
         {/* Newsletter */}
-        <div className="mb-16 rounded-3xl bg-[#214728] p-10">
-          <div className="grid items-center gap-8 lg:grid-cols-2">
+        <div className="mb-10 md:mb-16 rounded-3xl bg-[#214728] p-6 md:p-10">
+          <div className="grid items-center gap-6 md:gap-8 lg:grid-cols-2">
             <div>
-              <h2 className="text-4xl font-bold">
+              <h2 className="text-2xl md:text-4xl font-bold">
                 Join Our Newsletter
               </h2>
-              <p className="mt-3 text-green-100">
+              <p className="mt-2 md:mt-3 text-sm md:text-base text-green-100">
                 Get updates on new arrivals, exclusive offers and sustainable
                 fashion tips.
               </p>
             </div>
 
-            <div className="flex rounded-full bg-white p-2">
+            <div className="flex flex-col sm:flex-row gap-3 sm:gap-0 rounded-2xl sm:rounded-full bg-transparent sm:bg-white p-0 sm:p-2">
               <input
                 type="email"
                 placeholder="Enter your email..."
-                className="flex-1 rounded-full px-5 py-3 text-black outline-none"
+                className="flex-1 rounded-xl sm:rounded-full px-5 py-3 sm:py-3 text-black outline-none w-full border-2 sm:border-0 border-white/20 sm:border-transparent bg-white"
               />
-              <button className="flex items-center gap-2 rounded-full bg-green-700 px-6 text-white transition hover:bg-green-800">
+              <button className="flex justify-center items-center gap-2 rounded-xl sm:rounded-full bg-green-700 px-6 py-3 sm:py-0 text-white transition hover:bg-green-800 w-full sm:w-auto font-semibold">
                 Subscribe
                 <FiSend />
               </button>
@@ -41,7 +41,7 @@ export default function Footer() {
         </div>
 
         {/* Footer Grid */}
-        <div className="grid gap-10 md:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-8 md:gap-10 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
           <div>
             <div className="flex items-center gap-3">
               <FaLeaf className="text-3xl text-green-400" />
@@ -98,7 +98,7 @@ export default function Footer() {
           </div>
         </div>
 
-        <div className="mt-16 border-t border-green-800 pt-6 text-center text-gray-400">
+        <div className="mt-10 md:mt-16 border-t border-green-800 pt-6 text-center text-xs md:text-sm text-gray-400">
           © 2026 EcoStyle. All Rights Reserved.
         </div>
       </div>

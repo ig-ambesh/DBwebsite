@@ -1,132 +1,206 @@
-import { FiFilter, FiGrid, FiList, FiHeart, FiPlus, FiChevronDown } from "react-icons/fi";
-
-const products = Array.from({ length: 20 }, (_, i) => ({
-  id: i + 1,
-  name: [
-    "Organic Cotton Hoodie",
-    "Linen Regular Shirt",
-    "Eco Sneakers",
-    "Canvas Tote Bag",
-    "Recycled Cap",
-  ][i % 5],
-  price: (19.99 + i * 5).toFixed(2),
-  image: `https://picsum.photos/seed/product${i}/400/500`,
-}));
+import { useState, useEffect } from "react";
+import { Link, useSearchParams } from "react-router-dom";
+import { FiHeart, FiPlus, FiMinus, FiShoppingBag, FiCheck, FiStar } from "react-icons/fi";
+import { useCart } from "../context/CartContext";
+import { db } from "../firebase";
+import { collection, getDocs, query, orderBy } from "firebase/firestore";
 
 export default function Shop() {
-  return (
-    <div className="bg-[#F8F8F4] min-h-screen mb-8">
-      
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [activeCategory, setActiveCategory] = useState("All");
+  const { addToCart, getProductQuantity, updateQuantity } = useCart();
+  const [searchParams] = useSearchParams();
+  const searchQuery = searchParams.get("search")?.toLowerCase() || "";
 
-      <section className="mx-auto mt-6 max-w-7xl overflow-hidden rounded-[32px] bg-gradient-to-r from-[#f8f6ef] to-[#eef3e7] px-10 py-16">
-        <p className="text-sm text-gray-500">Home / Shop</p>
-        <h1 className="mt-3 text-5xl font-bold">Shop All Products</h1>
-        <p className="mt-4 max-w-lg text-gray-600">
-          Discover our collection of sustainable and eco‑friendly fashion.
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        const q = query(collection(db, "products"), orderBy("createdAt", "desc"));
+        const snap = await getDocs(q);
+        setProducts(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
+      } catch (err) {
+        console.error("Error fetching products:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchProducts();
+  }, []);
+
+  const categoryList = ["All", ...new Set(products.map((p) => p.category).filter(Boolean))];
+
+  const filtered = products.filter((p) => {
+    const matchesCategory = activeCategory === "All" || p.category === activeCategory;
+    const matchesSearch = !searchQuery || p.name.toLowerCase().includes(searchQuery) || (p.description && p.description.toLowerCase().includes(searchQuery));
+    return matchesCategory && matchesSearch;
+  });
+
+  return (
+    <div className="bg-[#F8F8F4] min-h-screen mb-8 px-4 md:px-6">
+      <section className="mx-auto mt-4 md:mt-6 max-w-7xl overflow-hidden rounded-3xl md:rounded-[32px] bg-gradient-to-r from-[#f8f6ef] to-[#eef3e7] px-6 md:px-10 py-10 md:py-16">
+        <p className="text-xs md:text-sm text-gray-500">Home / Shop</p>
+        <h1 className="mt-2 md:mt-3 text-3xl md:text-5xl font-bold">
+          {searchQuery ? `Search Results for "${searchQuery}"` : "Shop All Products"}
+        </h1>
+        <p className="mt-3 md:mt-4 max-w-lg text-sm md:text-base text-gray-600">
+          {searchQuery ? `Showing products matching your search.` : `Discover our collection of sustainable and eco‑friendly fashion.`}
         </p>
       </section>
 
-      <div className="mx-auto mt-8 max-w-7xl px-4">
-        <div className="mb-8 flex flex-wrap items-center justify-between gap-4">
-          <div className="flex flex-wrap gap-3">
-            {["Filter", "Categories", "Size", "Color", "Price"].map((x) => (
+      <div className="mx-auto max-w-7xl mt-8 md:mt-12">
+        <div className="mb-8 md:mb-10 flex flex-col md:flex-row md:items-center justify-between gap-4 md:gap-6">
+          <div className="flex flex-wrap gap-2 md:gap-3">
+            {categoryList.map((cat) => (
               <button
-                key={x}
-                className="flex items-center gap-2 rounded-xl border bg-white px-5 py-3 shadow-sm"
+                key={cat}
+                onClick={() => setActiveCategory(cat)}
+                className={`rounded-full border px-4 md:px-5 py-2 transition text-sm md:text-base ${
+                  activeCategory === cat
+                    ? "bg-green-700 text-white border-green-700"
+                    : "hover:bg-green-700 hover:text-white bg-white"
+                }`}
               >
-                {x}
-                <FiChevronDown />
+                {cat}
               </button>
             ))}
           </div>
-
-          <div className="flex items-center gap-3">
-            <button className="rounded-xl border bg-white p-3">
-              <FiGrid />
-            </button>
-            <button className="rounded-xl border bg-white p-3">
-              <FiList />
-            </button>
-          </div>
+          <p className="text-gray-500 text-sm md:text-base font-medium">Showing {filtered.length} Results</p>
         </div>
 
-        <div className="grid gap-8 lg:grid-cols-[260px_1fr]">
-          <aside className="rounded-3xl bg-white p-6 shadow-sm">
-            <h2 className="mb-5 flex items-center gap-2 text-xl font-semibold">
-              <FiFilter />
-              Filters
-            </h2>
-
-            <div className="space-y-6">
-              {["Categories", "Size", "Color"].map((title) => (
-                <div key={title}>
-                  <h3 className="mb-3 font-semibold">{title}</h3>
-                  <div className="space-y-2 text-gray-600">
-                    <label className="flex items-center gap-2">
-                      <input type="checkbox" />
-                      All
-                    </label>
-                    <label className="flex items-center gap-2">
-                      <input type="checkbox" />
-                      Men
-                    </label>
-                    <label className="flex items-center gap-2">
-                      <input type="checkbox" />
-                      Women
-                    </label>
-                  </div>
+        {loading ? (
+          <div className="grid gap-4 md:gap-8 grid-cols-2 lg:grid-cols-4">
+            {[...Array(8)].map((_, i) => (
+              <div key={i} className="overflow-hidden rounded-3xl bg-white shadow-md animate-pulse">
+                <div className="h-48 md:h-80 bg-gray-200"></div>
+                <div className="p-5 md:p-6 space-y-3">
+                  <div className="h-4 bg-gray-200 rounded w-20"></div>
+                  <div className="h-5 bg-gray-200 rounded w-3/4"></div>
+                  <div className="h-6 bg-gray-200 rounded w-1/3"></div>
+                  <div className="h-10 md:h-12 bg-gray-200 rounded-full"></div>
                 </div>
-              ))}
-
-              <button className="w-full rounded-xl bg-green-700 py-3 text-white">
-                Apply Filter
+              </div>
+            ))}
+          </div>
+        ) : filtered.length === 0 ? (
+          <div className="text-center py-16 md:py-20 bg-white rounded-3xl border border-gray-100 shadow-sm">
+            <p className="text-gray-500 text-base md:text-lg">No products found.</p>
+            {searchQuery && (
+              <button 
+                onClick={() => window.location.href = '/shop'} 
+                className="mt-4 text-green-700 font-semibold underline"
+              >
+                Clear Search
               </button>
-            </div>
-          </aside>
+            )}
+          </div>
+        ) : (
+          <div className="grid gap-4 md:gap-8 grid-cols-2 lg:grid-cols-4">
+            {filtered.map((product) => {
+              const isSoldOut = product.stock === 0;
+              const cartQty = getProductQuantity(product.id);
+              const maxStock = product.stock ?? Infinity;
+              const discount = product.originalPrice
+                ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)
+                : 0;
 
-          <section>
-            <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-4">
-              {products.map((p) => (
+              return (
                 <div
-                  key={p.id}
-                  className="overflow-hidden rounded-3xl bg-white shadow-sm transition hover:-translate-y-2 hover:shadow-lg"
+                  key={product.id}
+                  className={`overflow-hidden rounded-3xl bg-white shadow-md transition hover:-translate-y-2 hover:shadow-xl ${isSoldOut ? "opacity-75" : ""}`}
                 >
-                  <div className="relative">
-                    <img
-                      src={p.image}
-                      alt={p.name}
-                      className="h-72 w-full object-cover"
-                    />
-                    <button className="absolute right-4 top-4 rounded-full bg-white p-2 shadow">
+                  <Link to={`/product/${product.id}`} className="block relative">
+                    {product.imageUrl ? (
+                      <img src={product.imageUrl} alt={product.name} className="h-48 md:h-80 w-full object-cover" />
+                    ) : (
+                      <div className="h-48 md:h-80 w-full bg-gradient-to-br from-green-100 to-green-50 flex items-center justify-center">
+                        <FiShoppingBag className="text-3xl md:text-5xl text-green-300" />
+                      </div>
+                    )}
+
+                    <button className="absolute right-3 md:right-4 top-3 md:top-4 rounded-full bg-white p-2 md:p-3 shadow hover:scale-110 transition" onClick={(e) => e.preventDefault()}>
                       <FiHeart />
                     </button>
-                  </div>
 
-                  <div className="p-5">
-                    <h3 className="font-semibold">{p.name}</h3>
-                    <p className="mt-2 text-xl font-bold text-green-700">
-                      ${p.price}
-                    </p>
+                    <div className="absolute left-3 md:left-4 top-3 md:top-4 flex flex-col gap-2">
+                      {isSoldOut ? (
+                        <span className="rounded-full bg-red-600 px-2.5 md:px-3 py-1 text-[10px] md:text-xs font-bold text-white">SOLD OUT</span>
+                      ) : (
+                        <>
+                          {product.category && (
+                            <span className="rounded-full bg-green-700 px-2.5 md:px-3 py-1 text-[10px] md:text-xs font-semibold text-white">{product.category}</span>
+                          )}
+                          {discount > 0 && (
+                            <span className="rounded-full bg-yellow-500 px-2.5 md:px-3 py-1 text-[10px] md:text-xs font-bold text-white">{discount}% OFF</span>
+                          )}
+                        </>
+                      )}
+                    </div>
 
-                    <button className="mt-4 flex w-full items-center justify-center gap-2 rounded-full bg-green-700 py-3 text-white">
-                      <FiPlus />
-                      Add to Cart
-                    </button>
+                    {isSoldOut && (
+                      <div className="absolute inset-0 bg-black/20 flex items-center justify-center">
+                        <span className="text-white text-xl md:text-2xl font-bold opacity-50 rotate-[-15deg]">SOLD OUT</span>
+                      </div>
+                    )}
+                  </Link>
+
+                  <div className="p-3 md:p-6">
+                    <div className="mb-1 md:mb-3 flex text-yellow-500 text-[10px] md:text-base">
+                      <FiStar /><FiStar /><FiStar /><FiStar /><FiStar />
+                    </div>
+
+                    <Link to={`/product/${product.id}`}>
+                      <h3 className="text-sm md:text-xl font-semibold hover:text-green-700 transition line-clamp-1">{product.name}</h3>
+                    </Link>
+
+                    <div className="mt-1 md:mt-2 flex items-center gap-1 md:gap-2">
+                      <span className="text-base md:text-2xl font-bold text-green-700">₹{product.price?.toFixed(2)}</span>
+                      {product.originalPrice && (
+                        <span className="text-[10px] md:text-sm text-gray-400 line-through">₹{product.originalPrice.toFixed(2)}</span>
+                      )}
+                    </div>
+
+                    {product.stock != null && !isSoldOut && product.stock <= 5 && (
+                      <p className="text-[9px] md:text-xs text-yellow-600 font-semibold mt-1">Only {product.stock} left!</p>
+                    )}
+
+                    {/* Quantity Controls or Add to Cart */}
+                    {isSoldOut ? (
+                      <button disabled className="mt-4 md:mt-6 flex w-full items-center justify-center gap-2 rounded-full bg-gray-200 py-2.5 md:py-3 text-sm md:text-base font-semibold text-gray-400 cursor-not-allowed">
+                        Sold Out
+                      </button>
+                    ) : cartQty > 0 ? (
+                      <div className="mt-4 md:mt-6 flex items-center justify-between rounded-full border-2 border-green-700 overflow-hidden h-[44px] md:h-[52px]">
+                        <button
+                          onClick={() => updateQuantity(product.id, cartQty - 1)}
+                          className="w-12 h-full flex items-center justify-center text-green-700 hover:bg-green-50 transition"
+                        >
+                          <FiMinus />
+                        </button>
+                        <span className="font-bold text-base md:text-lg text-green-700">{cartQty}</span>
+                        <button
+                          onClick={() => { if (cartQty < maxStock) updateQuantity(product.id, cartQty + 1); }}
+                          disabled={cartQty >= maxStock}
+                          className="w-12 h-full flex items-center justify-center text-green-700 hover:bg-green-50 transition disabled:opacity-30"
+                        >
+                          <FiPlus />
+                        </button>
+                      </div>
+                    ) : (
+                      <button
+                        onClick={() => addToCart(product, 1)}
+                        className="mt-4 md:mt-6 flex w-full items-center justify-center gap-2 rounded-full bg-green-700 py-2.5 md:py-3 text-sm md:text-base font-semibold text-white transition hover:bg-green-800"
+                      >
+                        <FiShoppingBag /> Add to Cart
+                      </button>
+                    )}
                   </div>
                 </div>
-              ))}
-            </div>
-
-            <div className="mt-10 flex justify-center gap-2">
-              {[1,2,3,4,5].map(n=>(
-                <button key={n} className={`h-10 w-10 rounded-lg border ${n===1?"bg-green-700 text-white":"bg-white"}`}>{n}</button>
-              ))}
-            </div>
-          </section>
-        </div>
+              );
+            })}
+          </div>
+        )}
       </div>
-
-      
     </div>
   );
 }

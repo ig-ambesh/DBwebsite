@@ -13,7 +13,7 @@ import ProductDetail from './Pages/ProductDetail'
 import AdminLogin from './Pages/AdminLogin'
 import AdminPanel from './Pages/AdminPanel'
 import Profile from './Pages/Profile'
-import { Navigate } from 'react-router'
+import { Navigate } from 'react-router-dom'
 
 const AdminRoute = ({ children }) => {
   const isAdmin = sessionStorage.getItem("ecostyle_admin") === "true";

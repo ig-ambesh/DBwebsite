@@ -13,6 +13,8 @@ import ProductDetail from './Pages/ProductDetail'
 import AdminLogin from './Pages/AdminLogin'
 import AdminPanel from './Pages/AdminPanel'
 import Profile from './Pages/Profile'
+import Maintenance from './Pages/Maintenance'
+import { useSettings } from './context/SettingsContext'
 import { Navigate } from 'react-router-dom'
 
 const AdminRoute = ({ children }) => {
@@ -23,6 +25,7 @@ const AdminRoute = ({ children }) => {
 const App = () => {
   const location = useLocation();
   const isAdminRoute = location.pathname.startsWith("/admin");
+  const { maintenanceMode, loading } = useSettings();
 
   // Admin routes render without Navbar/Footer
   if (isAdminRoute) {
@@ -36,6 +39,18 @@ const App = () => {
         } />
       </Routes>
     );
+  }
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[#F8F8F4]">
+        <div className="w-8 h-8 border-2 border-green-500/30 border-t-green-500 rounded-full animate-spin"></div>
+      </div>
+    );
+  }
+
+  if (maintenanceMode) {
+    return <Maintenance />;
   }
 
   return (
